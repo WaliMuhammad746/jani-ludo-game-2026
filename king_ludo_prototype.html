@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>King Ludo</title>
+<style>
+:root{--navy:#071943;--gold:#ffc928;--red:#ed3448;--green:#22b85a;--blue:#2387f5;--yellow:#ffca28}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#183e8a,#06112d 72%);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+header{text-align:center;padding:18px 12px 8px} .crown{font-size:38px;filter:drop-shadow(0 3px 2px #000)}h1{margin:0;color:#ffd84d;font-size:clamp(28px,7vw,42px);font-weight:1000;letter-spacing:2px;text-shadow:0 3px #8a4200,0 6px 12px #000}header p{margin:4px 0 0;color:#c9d8ff;font-size:13px}
+main{width:min(94vw,540px);margin:0 auto;padding:8px 0 24px}.panel{background:#102654;border:1px solid #36548c;border-radius:18px;padding:12px;box-shadow:0 12px 28px #0005}
+.board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);background:#f8f9ff;border:4px solid #e6b629;border-radius:10px;overflow:hidden;box-shadow:0 5px 0 #8b5a0c}
+.cell{border:1px solid #d6dbe7;position:relative;display:flex;align-items:center;justify-content:center;color:#14213b;font-size:clamp(7px,2.4vw,12px);font-weight:800}
+.home{grid-column:span 6;grid-row:span 6;display:flex;align-items:center;justify-content:center;position:relative;border:1px solid #fff}
+.home.red{background:#ed3448}.home.green{background:#22b85a}.home.blue{background:#2387f5}.home.yellow{background:#ffca28}
+.homeinner{width:67%;height:67%;background:#fff;border:2px solid #dfe5f0;border-radius:14px;display:grid;grid-template-columns:1fr 1fr;gap:12%;padding:12%}
+.slot{border-radius:50%;background:var(--c);border:3px solid #ffffff;box-shadow:0 2px 3px #0005,inset 0 -3px 0 #0002}
+.center{grid-column:span 3;grid-row:span 3;background:conic-gradient(from 45deg,#ffca28 0 25%,#22b85a 0 50%,#2387f5 0 75%,#ed3448 0);display:flex;align-items:center;justify-content:center;font-size:clamp(10px,3vw,18px);font-weight:1000;color:#fff;text-shadow:0 2px 3px #000}
+.track{background:#fff}.track.red{background:#ffb7c0}.track.green{background:#b7f3ca}.track.blue{background:#b7d9ff}.track.yellow{background:#ffed9e}.safe:after{content:'★';color:#52617b;font-size:clamp(7px,2.5vw,13px)}
+.token{position:absolute;width:82%;height:82%;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px #0006;display:flex;align-items:center;justify-content:center;color:#fff;font-size:clamp(8px,2.5vw,14px);text-shadow:0 1px 2px #000;z-index:2}
+.token.red{background:var(--red)}.token.green{background:var(--green)}.token.blue{background:var(--blue)}.token.yellow{background:var(--yellow);color:#573900}
+.controls{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}.turn{font-weight:800;font-size:16px}.turn small{display:block;color:#c4d2f3;font-weight:500;font-size:12px;margin-top:2px}
+button{border:0;border-radius:13px;padding:12px 16px;font-size:15px;font-weight:900;cursor:pointer;color:#06112d;background:linear-gradient(#ffe77c,#ffbd19);box-shadow:0 4px 0 #9b5c00}button:disabled{opacity:.45;cursor:not-allowed}
+.dice{font-size:30px;background:#fff;color:#17213b;border-radius:12px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border:3px solid #e8b62d;box-shadow:0 4px 0 #8b5a0c}
+.status{margin-top:12px;background:#071632;border-radius:12px;padding:10px 12px;color:#dce6ff;font-size:13px;min-height:40px}
+.options{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}.options label{font-size:12px;color:#c9d8ff}.options select{background:#fff;border-radius:8px;padding:7px;border:0}
+footer{text-align:center;color:#8ea5d8;font-size:11px;padding:12px}
+@media(max-width:380px){.panel{padding:7px}.controls{gap:6px}.turn{font-size:14px}button{padding:10px 12px}}
+</style>
+</head>
+<body>
+<header><div class="crown">👑</div><h1>KING LUDO</h1><p>Roll the dice. Race to the crown!</p></header>
+<main><div class="panel">
+<div id="board" class="board" aria-label="Ludo board"></div>
+<div class="controls"><div class="turn" id="turn">🔴 Red's turn<small>Roll a 6 to bring a token out.</small></div><div id="dice" class="dice">⚀</div><button id="roll">ROLL DICE</button></div>
+<div class="status" id="status" role="status">Welcome! Roll the dice to start playing.</div>
+<div class="options"><label for="players">Players</label><select id="players"><option value="2">2 players</option><option value="3">3 players</option><option value="4" selected>4 players</option></select><button id="restart" style="padding:8px 12px;font-size:12px">NEW GAME</button></div>
+</div><footer>Local pass-and-play prototype • No online multiplayer or payments</footer></main>
+<script>
+const colors=['red','green','yellow','blue'];
+const emojis={red:'🔴',green:'🟢',yellow:'🟡',blue:'🔵'};
+const names={red:'Red',green:'Green',yellow:'Yellow',blue:'Blue'};
+const starts={red:0,green:13,yellow:26,blue:39};
+const route=[];
+for(let c=1;c<=6;c++)route.push([6,c]);
+for(let r=5;r>=0;r--)route.push([r,7]);
+for(let c=8;c<=14;c++)route.push([0,c]);
+for(let r=1;r<=6;r++)route.push([r,14]);
+for(let c=13;c>=8;c--)route.push([7,c]);
+for(let r=8;r<=14;r++)route.push([r,7]);
+for(let c=6;c>=0;c--)route.push([14,c]);
+for(let r=13;r>=8;r--)route.push([r,0]);
+for(let c=1;c<=6;c++)route.push([7,c]);
+const homeDefs=[
+ {color:'red',r:0,c:0},{color:'green',r:0,c:9},
+ {color:'blue',r:9,c:0},{color:'yellow',r:9,c:9}
+];
+let boardEl=document.getElementById('board'), cells={}, players=4, turn=0, rollVal=null, gameOver=false;
+let state={};
+function coordKey(r,c){return r+','+c}
+function addCell(r,c,cls='',text=''){let d=document.createElement('div');d.className='cell '+cls;d.style.gridRow=(r+1);d.style.gridColumn=(c+1);if(text)d.textContent=text;boardEl.appendChild(d);cells[coordKey(r,c)]=d;return d}
+function makeBoard(){
+ boardEl.innerHTML='';cells={};
+ // 6x6 home corners, with 3x3 center and track cells overlaid by grid placement
+ for(let h of homeDefs){let d=document.createElement('div');d.className='home '+h.color;d.style.gridRow=(h.r+1)+'/span 6';d.style.gridColumn=(h.c+1)+'/span 6';let inner=document.createElement('div');inner.className='homeinner';for(let i=0;i<4;i++){let s=document.createElement('div');s.className='slot';s.style.setProperty('--c',getComputedStyle(document.documentElement).getPropertyValue('--'+h.color));inner.appendChild(s)}d.appendChild(inner);boardEl.appendChild(d)}
+ // home colored lanes and common track
+ route.forEach((p,i)=>{let [r,c]=p;let cl='track';if(i>=0&&i<=5&&c===7)cl+=' red';if(i>=13&&i<=18&&r===7)cl+=' green';if(i>=26&&i<=31&&c===7)cl+=' yellow';if(i>=39&&i<=44&&r===7)cl+=' blue';if([0,8,13,21,26,34,39,47].includes(i))cl+=' safe';addCell(r,c,cl);});
+ // central finish
+ let center=document.createElement('div');center.className='center';center.style.gridRow='7/span 3';center.style.gridColumn='7/span 3';center.textContent='👑';boardEl.appendChild(center);
+}
+function init(){
+ players=Number(document.getElementById('players').value);turn=0;rollVal=null;gameOver=false;
+ state={};colors.forEach(col=>state[col]=Array.from({length:4},()=>({pos:-1,done:false})));
+ document.getElementById('status').textContent='New game! Roll a 6 to bring a token out of home.';
+ document.getElementById('roll').disabled=false;render();
+}
+function activeColors(){return colors.slice(0,players)}
+function render(){
+ makeBoard();
+ activeColors().forEach(col=>state[col].forEach((t,i)=>{
+  if(t.done)return;
+  let pos=t.pos, key,cell;
+  if(pos<0){let hd=homeDefs.find(x=>x.color===col);let rr=hd.r+(i<2?1:4),cc=hd.c+(i%2?4:1);key=coordKey(rr,cc);cell=cells[key];if(!cell){cell=addCell(rr,cc,'');}}
+  else {let idx=(starts[col]+pos)%route.length;key=coordKey(...route[idx]);cell=cells[key];}
+  if(!cell)return;
+  let tok=document.createElement('div');tok.className='token '+col;tok.textContent=String(i+1);tok.title=names[col]+' token '+(i+1);
+  if(rollVal!==null && col===activeColors()[turn] && (t.pos>=0 || rollVal===6))tok.style.outline='2px solid #ffdf58';
+  cell.appendChild(tok);
+ }));
+ let col=activeColors()[turn];document.getElementById('turn').innerHTML=emojis[col]+' '+names[col]+"'s turn"+'<small>'+(rollVal===null?'Roll the dice.':'Choose a token to move.')+'</small>';
+ document.getElementById('roll').disabled=rollVal!==null||gameOver;
+ document.getElementById('dice').textContent=rollVal===null?'⚀':['','⚀','⚁','⚂','⚃','⚄','⚅'][rollVal];
+ // click board cells to select token, simple pass-and-play selection
+ boardEl.querySelectorAll('.token').forEach((tok)=>tok.addEventListener('click',()=>{}));
+}
+document.getElementById('roll').addEventListener('click',()=>{
+ if(rollVal!==null||gameOver)return;
+ rollVal=1+Math.floor(Math.random()*6);
+ document.getElementById('status').textContent=names[activeColors()[turn]]+' rolled '+rollVal+'. '+(rollVal===6?'You can bring a token out or move one.':'Choose a token already on the track.');
+ render();
+});
+boardEl.addEventListener('click',e=>{
+ if(rollVal===null||gameOver)return;
+ let tok=e.target.closest('.token');if(!tok)return;
+ let col=activeColors()[turn];if(!tok.classList.contains(col))return;
+ let cell=tok.parentElement;let all=[...cell.querySelectorAll('.token')];let tokenIndex=all.indexOf(tok);
+ // Home tokens can be stacked; identify by displayed number
+ let idx=Math.max(0,Number(tok.textContent)-1),t=state[col][idx];
+ if(t.pos<0){if(rollVal!==6){document.getElementById('status').textContent='You need a 6 to bring a token out.';return}t.pos=0;}
+ else {t.pos+=rollVal;if(t.pos>=route.length){t.pos=route.length-1;t.done=true;}}
+ let landed=(starts[col]+t.pos)%route.length;
+ if(!t.done && ![0,8,13,21,26,34,39,47].includes(landed)){
+  activeColors().filter(c=>c!==col).forEach(other=>state[other].forEach(ot=>{if(ot.pos>=0&&!ot.done&&(starts[other]+ot.pos)%route.length===landed)ot.pos=-1;}));
+ }
+ let six=rollVal===6;rollVal=null;
+ if(state[col].every(x=>x.done)){gameOver=true;document.getElementById('status').textContent='🏆 '+names[col]+' wins King Ludo!';document.getElementById('roll').disabled=true;render();return}
+ if(!six)turn=(turn+1)%players;
+ document.getElementById('status').textContent=names[col]+' moved token '+(idx+1)+'. '+(six?'You rolled a 6 — take another turn!':'Next player’s turn.');
+ render();
+});
+document.getElementById('restart').addEventListener('click',init);
+document.getElementById('players').addEventListener('change',init);
+init();
+</script>
+</body></html>
